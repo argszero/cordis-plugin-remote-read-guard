@@ -24,6 +24,7 @@
  * - a late answer (and a late rejection) is reported, not dropped;
  * - only promise-shaped answers get a deadline;
  * - the wrapper re-reads the namespace's method record per call;
+ * - the bound does not depend on something else keeping the loop alive;
  * - `configure` refuses a nonsense deadline, and does not clear a reporter it was
  *   not asked about;
  * - `unwrapAll` really takes the guard off.
@@ -115,6 +116,14 @@ const MUTATIONS = [
         '  const frozen = get.call(holder) as (...rest: unknown[]) => unknown\n  const guardedGetter = function guardedGetter(this: object): (...args: unknown[]) => unknown {'],
       ['        answer = (get.call(owner) as (...rest: unknown[]) => unknown)(...args)', '        answer = frozen(...args)'],
     ],
+  },
+  {
+    name: 'the deadline only fires while something else keeps the loop alive',
+    file: 'src/client/guard.ts',
+    edits: [[
+      '    const answerLate = (detail: string): void => {',
+      '    if (typeof timer.unref === \'function\') timer.unref()\n    const answerLate = (detail: string): void => {',
+    ]],
   },
   {
     name: 'configure stops refusing a deadline that is not a positive finite number',

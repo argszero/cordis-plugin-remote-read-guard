@@ -17,7 +17,7 @@ import { readFile } from 'node:fs/promises'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
-import { createManager, delay, hanging, loadClientBundle, ok, rejecting, settle, staysPending, within, world } from './harness.mjs'
+import { createManager, delay, hanging, inChildProcess, loadClientBundle, ok, rejecting, settle, staysPending, within, world } from './harness.mjs'
 
 const BUNDLE = await readFile(fileURLToPath(new URL('../lib/client.js', import.meta.url)), 'utf8')
 
@@ -212,4 +212,22 @@ test('configure leaves a reporter alone when the call does not mention one', asy
   const manager = createManager()
   assert.equal(await within(manager.read(remote), 500, 'the controller read'), 'error')
   assert.deepEqual(events.map(event => event.kind), ['deadline'])
+})
+
+test('the deadline fires in a process where nothing else is keeping the loop alive', () => {
+  // The bound must not be conditional on other pending work. Run the shipped
+  // module in a child process that arms a hanging read and awaits *only* that:
+  // if the deadline were unref'ed, the child would exit with the promise
+  // unsettled and print nothing.
+  const child = inChildProcess(`
+    const { guardAccessor } = await import(${JSON.stringify(new URL('../lib/guard.js', import.meta.url).href)})
+    const holder = {}
+    Object.defineProperty(holder, 'list', { configurable: true, enumerable: true, get: () => () => new Promise(() => {}) })
+    guardAccessor(holder, 'list', 'pluginInventory.list', { timeoutMs: 40 })
+    const answer = await holder.list()
+    console.log('bounded:', answer.ok, '| code:', answer.error.code)
+  `)
+  assert.equal(child.stderr.trim(), '')
+  assert.equal(child.status, 0)
+  assert.match(child.stdout, /bounded: false \| code: gateway\/internal/u)
 })

@@ -21,6 +21,7 @@
  *   and not through `ctx.get`.
  */
 
+import { spawnSync } from 'node:child_process'
 import { Context, Service } from '@deepseek-ai/cordis'
 
 /** A `remote` service: the parent every namespace hangs under. */
@@ -206,6 +207,21 @@ export function within(promise, ms, label) {
     promise,
     delay(ms).then(() => { throw new Error(`${label} was still pending after ${String(ms)}ms`) }),
   ])
+}
+
+/**
+ * Run a snippet in a **fresh Node process** and return its output.
+ *
+ * Needed for claims about process lifetime: a bounded read that only settles
+ * because the test's own timers keep the loop alive proves nothing about the
+ * bound. The child is what makes the question askable — it has exactly the code
+ * under test and nothing else.
+ * @param code - the module source to run with `node --input-type=module -e`.
+ * @returns the child's combined output and exit status.
+ */
+export function inChildProcess(code) {
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', code], { encoding: 'utf8' })
+  return { stdout: result.stdout, stderr: result.stderr, status: result.status }
 }
 
 /** Whether a promise is still pending after `ms` — the other half of {@link within}. */

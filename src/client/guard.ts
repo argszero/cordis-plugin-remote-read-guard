@@ -173,9 +173,12 @@ export function bounded(answer: PromiseLike<unknown>, read: string, settings: Re
       settings.onEvent?.({ kind: 'deadline', read, detail: `${String(timeoutMs)}ms` })
       resolve(guardFailure(deadlineMessage(read, timeoutMs)))
     }, timeoutMs)
-    // Node keeps a pending timer alive; a page does not. Unref where the host
-    // supports it so the bound itself cannot hold a process open.
-    if (typeof timer.unref === 'function') timer.unref()
+    // The timer stays referenced on purpose. A page never exits, so it costs
+    // nothing there; in Node it is what makes the deadline hold when the bounded
+    // read is the only thing keeping the process alive. Unref'ing it would make
+    // the bound conditional on something else running — a silent exception to the
+    // one thing this plugin claims, and the same non-answer in a different
+    // costume. `test/plugin.spec.mjs` pins it in a child process for that reason.
     const answerLate = (detail: string): void => {
       settings.onEvent?.({ kind: 'late', read, detail })
     }

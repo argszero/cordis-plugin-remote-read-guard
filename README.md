@@ -162,6 +162,11 @@ controller's own store (`read()` without a `catch`, as it is in the product). Th
 measured claim: with the plugin mounted, a hanging or throwing read reaches `error`
 instead of `loading`.
 
+One arm runs a **child process** that arms a hanging read and awaits only that: the
+deadline must fire in a process where nothing else is keeping the loop alive. The bound
+is unconditional — a deadline that only works while other work is pending is the same
+silent non-answer in a different costume.
+
 ## Peer / compatibility
 
 - peer: `@deepseek-ai/cordis`
