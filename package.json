@@ -1,0 +1,82 @@
+{
+  "name": "@argszero/cordis-plugin-remote-read-guard",
+  "description": "A Client Remote read that never answers must not leave the page loading forever. The dsh Web plugin manager reads `remote.pluginInventory.list()` and `remote.pluginManager.listBundles()/listPlugins()` with no failure exit and no deadline: its store wraps the reads in `try/finally` alone (packages/client/ui-plugin-manager/src/client/manager-store.ts:670-707), so a rejected read leaves `status: 'loading'` forever and a read that never settles does the same, with no error and no retry button. This browser-half plugin bounds each of those reads: a read that throws, or that does not answer within a deadline, is reported through the `{ ok: false }` branch the store already handles — which is the branch that turns the page's own error and Retry UI on. Measured on @deepseek-ai/cordis 4.0.4: the namespace services expose their methods as configurable accessors, so a plugin can wrap them, and the consumer's own `ctx.remote.<namespace>.<method>()` path reaches the wrapper.",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/argszero/cordis-plugin-remote-read-guard.git"
+  },
+  "homepage": "https://github.com/argszero/cordis-plugin-remote-read-guard#readme",
+  "bugs": {
+    "url": "https://github.com/argszero/cordis-plugin-remote-read-guard/issues"
+  },
+  "keywords": [
+    "cordis",
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "plugin-manager",
+    "remote",
+    "timeout",
+    "deadline",
+    "browser-half"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./guard": {
+      "types": "./lib/types/client/guard.d.ts",
+      "default": "./lib/guard.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*.js",
+    "lib/types/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.25.0",
+    "semver": "^7.6.3",
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
+    "pretest": "npm run build",
+    "test": "node --test \"test/*.spec.mjs\"",
+    "test:inject": "node scripts/inject-defects.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": "^22.19 || >=24"
+  }
+}

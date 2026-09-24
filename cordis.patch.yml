@@ -1,0 +1,25 @@
+# The @argszero/cordis-plugin-remote-read-guard bundle patch.
+#
+# It mounts with an empty config. The node half is inert and the substance is the
+# browser half, which the Web shell discovers through this package's `dsh.client`
+# declaration (the same row that mounts this node half — see
+# @deepseek-ai/dsh-client-modules, which scans the host Loader's entries for
+# packages declaring `dsh.client`).
+#
+# A `config:` block here would not reach the plugin: a browser half is mounted
+# from a boot row that carries the entry id alone (packages/client/modules/src/
+# client/entries.ts builds each Loader entry from `{ id }`), so this plugin is
+# deliberately config-free and its deadline is a documented constant.
+#
+# To stop guarding, disable the row (or drop it) in your profile:
+#
+#   - set:
+#       - id: remote-read-guard
+#         disabled: true
+#
+# Inside a bundle whose patch already has rows, add the same `insert` entry
+# instead of a second document.
+
+- insert:
+    - id: remote-read-guard
+      name: '@argszero/cordis-plugin-remote-read-guard'
