@@ -47,6 +47,12 @@ turns a healthy answer into a failure.
 
 ## Mount
 
+```sh
+dsh plugin --profile <profile> add github:argszero/cordis-plugin-remote-read-guard
+```
+
+The git spec installs the tree this README describes; `npm install` on its own never attaches a plugin to a profile — `dsh plugin add` is what writes the row that makes it load.
+
 ```yaml
 # in your dsh profile / bundle patch
 - insert:
